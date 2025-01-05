@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPPS Lost & Found</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        header {
+            background-color: navy;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 10;
+        }
+        header.hidden {
+            display: none;
+        }
+        header h1 {
+            margin: 0;
+        }
+        header .subtext {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .container {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 7rem;
+        }
+        #foundForm {
+            max-width: 400px;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+        .found-items {
+            flex-grow: 1;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 800px;
+        }
+        h2, .found-items h3 {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.6rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            transition: all 0.3s ease;
+        }
+        button {
+            background-color: navy;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #003366;
+        }
+        select, input:focus, textarea:focus, button:focus {
+            border-color: navy;
+            outline: none;
+        }
+        textarea, input[type="file"] {
+            width: 100%; /* Match width of other elements */
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: none;
+        }
+        .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .filter-section label {
+            font-size: 1rem;
+            color: #333;
+        }
+        .found-items .item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .found-items .item:hover {
+            transform: scale(1.02);
+        }
+        .found-items .item .info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .found-items .item img {
+            width: 120px;
+            height: auto;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .pagination a {
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.25rem;
+            background-color: white;
+            color: navy;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .pagination a.active {
+            background-color: navy;
+            color: white;
+        }
+        .pagination a.nav-btn {
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 20;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal img {
+            max-width: 80%;
+            max-height: 80%;
+            border: none;
+            border-radius: 5px;
+        }
+        .modal .close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+        }
+    @media (max-width: 768px) {
+        .container {
+            flex-direction: column; /* Stack vertically */
+            align-items: center;
+        }
+    
+        #foundForm, .found-items {
+            width: 90%; /* Make each section take up most of the screen width */
+            padding: 1rem; /* Reduce padding */
+        }
+    
+        .found-items .item {
+            flex-direction: column; /* Stack content inside each item vertically */
+            align-items: flex-start;
+        }
+    
+        .found-items .item img {
+            width: 100%; /* Make the image take up full width */
+            margin-left: 0; /* Remove left margin */
+            margin-top: 1rem; /* Add spacing above the image */
+        }
+    
+        .filter-section {
+            flex-direction: column; /* Stack filters vertically */
+            gap: 0.5rem; /* Reduce space between filters */
+        }
+    
+        button {
+            width: 100%; /* Make buttons full width for easier clicking */
+        }
+    }
+
+    </style>
+</head>
+<body>
+    <header id="header">
+        <h1>SPPS Lost & Found</h1>
+        <div class="subtext">Created by SPPS Coding Association</div>
+    </header>
+    <div class="container">
+        <div id="foundForm">
+          <p style="text-align: center; font-size: 0.8rem; color: #808080; margin-top: 1rem;">
+              Please bring any found item to the admin office for safekeeping
+          </p>
+            <h2>Report Found Item</h2>
+            <label for="category">Category:</label>
+            <select id="category">
+                <option value="Stationery">Stationery</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Books">Books</option>
+                <option value="Sports Equipment">Sports Equipment</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Other">Other</option>
+            </select>
+            <label for="location">Location:</label>
+            <select id="location">
+                <option value="MB 1st Floor">MB 1st Floor</option>
+                <option value="MB 2nd Floor">MB 2nd Floor</option>
+                <option value="MB 3rd Floor">MB 3rd Floor</option>
+                <option value="NB 1st Floor">NB 1st Floor</option>
+                <option value="NB 2nd Floor">NB 2nd Floor</option>
+                <option value="NB 3rd Floor">NB 3rd Floor</option>
+                <option value="Assembly Hall">Assembly Hall</option>
+                <option value="Front Yard">Front Yard</option>
+                <option value="HS Terrace">HS Terrace</option>
+                <option value="MS Terrace">MS Terrace</option>
+                <option value="Gym">Gym</option>
+            </select>
+            <label for="photo">Upload Picture:</label>
+            <input type="file" id="photo">
+            <label for="note">Note:</label>
+            <textarea id="note"></textarea>
+            <button onclick="addFoundItem()">Add Found Item</button>
+        </div>
+        <div class="found-items">
+            <p style="text-align: center; font-size: 0.8rem; color: #808080; margin-bottom: 1rem;">
+                All listed items are available for pickup at the admin office
+            </p>
+            <h3>Found Items</h3>
+            <div class="filter-section">
+                <label>Filter:</label>
+                <select id="filterCategory">
+                    <option value="all">All Categories</option>
+                    <option value="Stationery">Stationery</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Books">Books</option>
+                    <option value="Sports Equipment">Sports Equipment</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select id="filterLocation">
+                    <option value="all">All Locations</option>
+                    <option value="MB 1st Floor">MB 1st Floor</option>
+                    <option value="MB 2nd Floor">MB 2nd Floor</option>
+                    <option value="MB 3rd Floor">MB 3rd Floor</option>
+                    <option value="NB 1st Floor">NB 1st Floor</option>
+                    <option value="NB 2nd Floor">NB 2nd Floor</option>
+                    <option value="NB 3rd Floor">NB 3rd Floor</option>
+                    <option value="Assembly Hall">Assembly Hall</option>
+                    <option value="Front Yard">Front Yard</option>
+                    <option value="HS Terrace">HS Terrace</option>
+                    <option value="MS Terrace">MS Terrace</option>
+                    <option value="Gym">Gym</option>
+                </select>
+                <button onclick="applyFilter()">Apply Filter</button>
+            </div>
+            <div id="itemsContainer"></div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+        <div class="modal" id="imageModal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img id="modalImage">
+        </div>
+    </div>
+  <script>
+    function openModal(src) {
+        document.getElementById("header").classList.add("hidden");
+        document.getElementById("modalImage").src = src;
+        document.getElementById("imageModal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("header").classList.remove("hidden");
+        document.getElementById("imageModal").style.display = "none";
+    }
+</script>
+  <script>
+        let items = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        function addFoundItem() {
+            const confirmation = confirm("Add item to the list?");
+            if (!confirmation) {
+                return; // Cancel the process if the user clicks 'Cancel'
+            }
+            const category = document.getElementById("category").value;
+            const location = document.getElementById("location").value;
+            const note = document.getElementById("note").value;
+            const fileInput = document.getElementById("photo");
+            const file = fileInput.files[0];
+            const item = { category, location, note, file };
+            items.unshift(item);
+            displayItems();
+            updatePagination();
+        }
+
+        function displayItems() {
+            const container = document.getElementById("itemsContainer");
+            container.innerHTML = "";
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedItems = items.slice(start, end);
+
+            paginatedItems.forEach(item => {
+                const itemContainer = document.createElement("div");
+                itemContainer.classList.add("item");
+                const info = `<div class='info'>
+                                <div><strong>Category:</strong> ${item.category}</div>
+                                <div><strong>Location:</strong> ${item.location}</div>
+                                <div><strong>Note:</strong> ${item.note}</div>
+                              </div>`;
+                itemContainer.innerHTML = info;
+
+                if (item.file) {
+                    const img = document.createElement("img");
+                    img.src = URL.createObjectURL(item.file);
+                    img.onclick = function () {
+                        openModal(img.src);
+                    };
+                    itemContainer.appendChild(img);
+                }
+
+                const trashIcon = document.createElement("span");
+                trashIcon.innerHTML = "🗑️";
+                trashIcon.style.cursor = "pointer";
+                trashIcon.style.marginLeft = "10px";
+                trashIcon.style.fontSize = "1.5rem"; // Make the trash can bigger
+                  trashIcon.onclick = function () {
+                    const actualIndex = items.indexOf(item); // Find actual index in the main items array
+                    deleteItem(actualIndex); // Delete item
+                };
+                itemContainer.appendChild(trashIcon);
+                container.appendChild(itemContainer);
+            });
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById("pagination");
+            pagination.innerHTML = "";
+            const totalPages = Math.ceil(items.length / itemsPerPage);
+
+            if (currentPage > 1) {
+                const prevButton = document.createElement("a");
+                prevButton.innerText = "<";
+                prevButton.classList.add("nav-btn");
+                prevButton.onclick = () => changePage(-1);
+                pagination.appendChild(prevButton);
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement("a");
+                pageButton.innerText = i;
+                if (i === currentPage) pageButton.classList.add("active");
+                pageButton.onclick = () => goToPage(i);
+                pagination.appendChild(pageButton);
+            }
+
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement("a");
+                nextButton.innerText = ">";
+                nextButton.classList.add("nav-btn");
+                nextButton.onclick = () => changePage(1);
+                pagination.appendChild(nextButton);
+            }
+        }
+        function applyFilter() {
+          const selectedCategory = document.getElementById("filterCategory").value;
+          const selectedLocation = document.getElementById("filterLocation").value;
+      
+          const filteredItems = items.filter(item => {
+              const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+              const matchesLocation = selectedLocation === "all" || item.location === selectedLocation;
+              return matchesCategory && matchesLocation;
+          });
+      
+          displayFilteredItems(filteredItems);
+        }
+
+        function deleteItem(index) {
+            const code = prompt("Please enter the password to delete this item:");
+            if (code === "7865") {
+                items.splice(index, 1); // Remove the item at the given index
+                displayItems();        // Refresh the displayed items
+                updatePagination();    // Update pagination
+                alert("Item deleted successfully.");
+            } else {
+                alert("Incorrect code. Item not deleted.");
+            }
+        }
+
+
+        function displayFilteredItems(filteredItems) {
+            const container = document.getElementById("itemsContainer");
+            container.innerHTML = ""; // Clear current items
+        
+            filteredItems.forEach((item, index) => {
+                const itemContainer = document.createElement("div");
+                itemContainer.classList.add("item");
+                const info = `<div class='info'>
+                                <div><strong>Category:</strong> ${item.category}</div>
+                                <div><strong>Location:</strong> ${item.location}</div>
+                                <div><strong>Note:</strong> ${item.note}</div>
+                              </div>`;
+                itemContainer.innerHTML = info;
+        
+                // Add image if exists
+                if (item.file) {
+                    const img = document.createElement("img");
+                    img.src = URL.createObjectURL(item.file);
+                    img.onclick = function () {
+                        openModal(img.src);
+                    };
+                    itemContainer.appendChild(img);
+                }
+        
+                // Add trash can delete icon
+                const trashIcon = document.createElement("span");
+                trashIcon.innerHTML = "🗑️";
+                trashIcon.style.cursor = "pointer";
+                trashIcon.style.marginLeft = "10px";
+                trashIcon.style.fontSize = "1.5rem"; // Make the trash can bigger
+                trashIcon.onclick = function () {
+                    const actualIndex = items.indexOf(item); // Find actual index in the main items array
+                    deleteItem(actualIndex);
+                };
+                itemContainer.appendChild(trashIcon);
+        
+                container.appendChild(itemContainer);
+            });
+        }
+
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(items.length / itemsPerPage);
+            currentPage += direction;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            displayItems();
+            updatePagination();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            displayItems();
+            updatePagination();
+        }
+
+        function openModal(src) {
+            document.getElementById("modalImage").src = src;
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+    </script>
+</body>
+</html>
